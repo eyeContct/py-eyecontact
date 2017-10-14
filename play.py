@@ -45,6 +45,29 @@ fps = 0
 #     pdb.set_trace()
 # shape should be height, width, color(480, 720, 3)
 
+
+class Gaze(object):
+
+    def __init__(eye, last_eye, last_eye_frame_diff,imgsize):
+        """
+        eye = (x,y)
+
+        """
+
+        #keeping_contact = True
+
+
+        normalized_eye = eye / imgsize
+
+    def keeping_contact(self):
+
+
+        if 
+
+
+
+
+
 for frame in videogen:
 
 
@@ -80,6 +103,9 @@ for frame in videogen:
             cv2.rectangle(roi_color,(ex,ey),(ex+ew,ey+eh),(0,255,0),2)
 
 
+    # Decide whether keeping contact
+
+
     # Shift because pyqt is weird
     frame = frame.transpose([1,0,2])[:,-1::-1,:]
     # Display
@@ -88,17 +114,13 @@ for frame in videogen:
     app.processEvents()
 
 
-
-
     # Timer content
-
     now = time.time()
     fps2 = 1.0 / (now-updateTime)
     updateTime = now
     fps = fps * 0.9 + fps2 * 0.1
     
     print "%0.1f fps" % fps
-
     #pdb.set_trace()
 
 
