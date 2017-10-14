@@ -17,10 +17,12 @@ def raise_alarm():
     Flash box or text
     """
     print('look back')
+    text2.setText("<Look at them!>")
 
 
 class Gaze(object):
-
+    xlim = [0.4, 0.6]
+    ylim = [0.1, 0.3]
     def __init__(self, hasface, eye=None, last_eye=None, last_eye_frame=None, imgsize=None):
         """
         hasface = boolean
@@ -37,16 +39,26 @@ class Gaze(object):
         """
         Is the person keeping contact?
         """
-        if not self.hasface:
+        if not self.hasface or self.eye is None:
+            alleyes.append([0,0])
             return False
+
         else:
-            print('eye:',self.eye)
+            self.normalized_eye = self.eye / self.imgsize
+            # lol global variable
+            alleyes.append(self.normalized_eye)
+
+            print('neye:',self.normalized_eye)
+
+            # The real work is here
+            if self.normalized_eye[0] < Gaze.xlim[0] or self.normalized_eye[0] > Gaze.xlim[1]:
+                return False
+
+            if self.normalized_eye[1] < Gaze.ylim[0] or self.normalized_eye[1] > Gaze.ylim[1]:
+                return False
+
             return True
 
-        self.normalized_eye = self.eye / self.imgsize
-
-        if self.normalized_eye:
-            pass
 
 
 opencvpath = '/home/cx1111/Software/opencv/data/haarcascades'
@@ -70,6 +82,11 @@ img = pg.ImageItem(border='w')
 view.addItem(img)
 ## Set initial view bounds
 #view.setRange(QtCore.QRectF(0, 0, 600, 600))
+
+# Warning message
+text2 = pg.TextItem(anchor=(-0.3,0.5), angle=360, border='w', fill=(255, 0, 0, 50))
+view.addItem(text2)
+
 updateTime = time.time()
 fps = 0
 
@@ -85,7 +102,10 @@ fps = 0
 
 
 
-fskipcount = 1
+alleyes = []
+
+# Keep at 2. Every 3 frames.
+fskipcount = 3
 fcount = fskipcount
 
 
@@ -135,8 +155,17 @@ for frame in videogen:
                 eye = eyes[1][:2]
             else:
                 eye = eyes[0][:2]
+
+        # Just get one eye
+        elif len(eyes) == 1:
+            eye = eyes[0][:2]
+
+        # No eyes
         else:
-            eye = eyes[:2]
+            eye = None
+
+        if eye is not None:
+            eye = eye + np.array([x,y])
 
         gaze = Gaze(hasface=True, eye=eye, imgsize=imgsize)
 
@@ -170,3 +199,7 @@ for frame in videogen:
     fcount = 0
 
 
+pg.plot([e[0] for e in alleyes])
+pg.plot([e[1] for e in alleyes])
+
+pdb.set_trace()
