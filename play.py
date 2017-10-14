@@ -16,26 +16,34 @@ def raise_alarm():
     """
     Flash box or text
     """
-    pass
+    print('look back')
 
 
 class Gaze(object):
 
-    def __init__(hasface, eye=None, last_eye=None, last_eye_frame=None, imgsize=None):
+    def __init__(self, hasface, eye=None, last_eye=None, last_eye_frame=None, imgsize=None):
         """
         hasface = boolean
         eye = (x,y)
         """
+        self.hasface = hasface
         self.eye = eye
+        self.last_eye = last_eye
+        self.last_eye_frame = last_eye_frame
+        self.imgsize = imgsize
 
-        self.normalized_eye = eye / imgsize
-
+        
     def keeping_contact(self):
         """
         Is the person keeping contact?
         """
-        if not hasface:
+        if not self.hasface:
             return False
+        else:
+            print('eye:',self.eye)
+            return True
+
+        self.normalized_eye = self.eye / self.imgsize
 
         if self.normalized_eye:
             pass
@@ -77,12 +85,13 @@ fps = 0
 
 
 
-fcount = 3
+fskipcount = 1
+fcount = fskipcount
 
 
 for frame in videogen:
     # Don't need to process every frame
-    if fcount < 3:
+    if fcount < fskipcount:
         fcount += 1
         continue
 
@@ -111,14 +120,34 @@ for frame in videogen:
             #pdb.set_trace()
             cv2.rectangle(roi_color,(ex,ey),(ex+ew,ey+eh),(0,255,0),2)
 
+    imgsize = np.array(grayframe.shape[1::-1], dtype='float')
+    #print(imgsize)
+
+
     # Decide whether keeping contact
+    if len(faces) == 0:
+        gaze = Gaze(hasface=False)
+    else:
+        # Choose just one eye
+        if len(eyes) == 2:
+            # Get the x and y pos of the left eye
+            if eyes[0][0] > eyes[1][0]:
+                eye = eyes[1][:2]
+            else:
+                eye = eyes[0][:2]
+        else:
+            eye = eyes[:2]
 
-    #imsize = np.array(grayframe.shape[:2], dtype='float')
+        gaze = Gaze(hasface=True, eye=eye, imgsize=imgsize)
+
+    if not gaze.keeping_contact():
+        raise_alarm()
+
     #pdb.set_trace()
-    gaze = Gaze(imsize = np.array(grayframe.shape[:2], dtype='float'))
 
-    #if not gaze.keeping_contact():
-    #    raise_alarm()
+    #gaze = Gaze(imsize = np.array(grayframe.shape[:2], dtype='float'))
+
+
 
 
     # Shift because pyqt is weird
@@ -135,7 +164,7 @@ for frame in videogen:
     updateTime = now
     fps = fps * 0.9 + fps2 * 0.1
     
-    print "%0.1f fps" % fps
+    #print "%0.1f fps" % fps
     #pdb.set_trace()
 
     fcount = 0
